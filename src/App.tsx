@@ -10,6 +10,7 @@ import EventsAdmin from './pages/admin/Events';
 import Login from './pages/Login';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './lib/auth';
+import Cancel from "./pages/Cancel"
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/admin/events" element={<EventsAdmin />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/cancel" element={<Cancel />} />
             </Routes>
           </main>
           <Footer />
