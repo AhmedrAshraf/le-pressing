@@ -108,8 +108,8 @@ console.log("event?.price", event?.price, totalPrice);
         seats: data.seats,
         total_amount: parseFloat(totalPrice),
       }
-      // const response = await axios.post("https://le-pressing-server.vercel.app/api/create-payment-intent", { amount: totalPrice, bookingData:bookingDetail  });
-      const response = await axios.post("http://localhost:8000/api/create-payment-intent", { amount: totalPrice, bookingData:bookingDetail  });
+      const response = await axios.post("https://le-pressing-server.vercel.app/api/create-payment-intent", { amount: totalPrice, bookingData:bookingDetail  });
+      // const response = await axios.post("http://localhost:8000/api/create-payment-intent", { amount: totalPrice, bookingData:bookingDetail  });
       const { url } = response.data;
 
       if (!url) {
