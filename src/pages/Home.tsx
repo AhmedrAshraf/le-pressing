@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState , useCallback, useRef} from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import { Calendar, MapPin, Clock, ImageIcon, Check } from 'lucide-react';
@@ -27,19 +27,37 @@ const Home = () => {
   const [showModal, setShowModal] = useState(false)
   const [paymentDetail, setPaymentDetail] = useState<{ [key: string]: string } | null>(null)
   const [searchParams, setSearchParams] = useSearchParams();
-  
-  const updatePaymentSatatus = async (status, session, bookingDataEncoded) => {
+  const [bookingInserted, setBookingInserted] = useState(false);
+  const bookingInsertedRef = useRef(false);
+  const processingRef = useRef(false); 
+
+  const updatePaymentStatus = async (status: string, session: string, bookingDataEncoded: string) => {
+    if (processingRef.current) return;
+    processingRef.current = true; 
+    
     try {
-      console.log("session", session, status);
+      console.log("Processing payment with session:", session, status);
       
       const decoded = decodeURIComponent(bookingDataEncoded); 
       const bookingData = JSON.parse(decoded); 
-      window.console.log("✅ Decoded Booking Data:", bookingData);
+      console.log("Decoded Booking Data:", bookingData);
+      
+      // First check if booking already exists
+      const { data: existingBooking, error: existingError } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('payment_id', session)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+      if (existingBooking) {
+        console.log("Booking already exists, skipping insertion");
+        return;
+      }
       
       const { data: bookingDetail, error: bookingError } = await supabase
         .from('bookings')
-        .insert([
-          {
+        .insert({
             event_id: bookingData.event_id,
             user_name: bookingData.user_name,
             user_email: bookingData.user_email,
@@ -48,34 +66,37 @@ const Home = () => {
             total_amount: bookingData.total_amount,
             payment_status: status,
             payment_id: session
-          },
-        ])
+          })
         .select()
         .single();
-  
-      if (bookingError) {
-        console.error("❌ Error inserting booking:", bookingError);
-        return;
-      }
-  
-      console.log("🥳 Booking inserted:", bookingDetail);
+
+      if (bookingError) throw bookingError;
+      
+      console.log("Booking successfully inserted:", bookingDetail);
+      
+      // Clear URL parameters after successful insertion
+      window.history.replaceState({}, document.title, window.location.pathname);
     } catch (err) {
-      console.error("❌ Failed to decode or insert booking:", err);
+      console.error("Failed to process booking:", err);
+    } finally {
+      processingRef.current = false; 
     }
-  }; 
-  
+  };
+
   useEffect(() => {
-    const params = Object.fromEntries(searchParams.entries());
-    const bookingDataEncoded = params.bookingData;
-  
-    if (params.session && params.status && bookingDataEncoded) {
-      setPaymentDetail(params);
-      setShowModal(true);
-      console.log("✅ Payment success detected");
-      updatePaymentSatatus(params.status, params.session, bookingDataEncoded);
-    }
+    const processPayment = async () => {
+      const params = Object.fromEntries(searchParams.entries());
+      const { session, status, bookingData } = params;
+      
+      if (session && status && bookingData) {
+        setPaymentDetail(params);
+        setShowModal(true);
+        await updatePaymentStatus(status, session, bookingData);
+      }
+    };
+
+    processPayment();
   }, [searchParams]);
-  
 
   useEffect(() => {
     fetchUpcomingEvents();

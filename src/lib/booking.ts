@@ -61,7 +61,7 @@ export async function checkAvailability(
       .select('seats')
       .eq('event_id', eventId)
       .in('status', ['pending', 'confirmed']);
-
+      
     const bookedSeats = bookings?.reduce((sum, booking) => sum + booking.seats, 0) || 0;
     const remainingSeats = currentSettings.max_seats - bookedSeats;
 
@@ -114,6 +114,7 @@ export async function createBooking(bookingData: BookingData) {
       })
       .select()
       .single();
+      console.log("🚀 ~ createBooking ~ booking:", booking)
 
     if (bookingError) throw bookingError;
 

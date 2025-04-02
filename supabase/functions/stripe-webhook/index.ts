@@ -40,7 +40,7 @@ serve(async (req) => {
 
         if (paymentError) throw paymentError;
 
-        const { error: bookingError } = await supabase
+        const { data, error: bookingError } = await supabase
           .from('bookings')
           .insert({
             event_id: eventId,
@@ -51,7 +51,8 @@ serve(async (req) => {
             status: 'confirmed',
             payment_id: payment.id,
           });
-
+          
+          console.log("🚀 ~ serve ~ data:", data)
         if (bookingError) throw bookingError;
         break;
       }
