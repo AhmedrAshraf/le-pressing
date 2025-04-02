@@ -82,7 +82,7 @@ const Booking = () => {
     }
   }, [eventId, seats]);
 
-const totalPrice = ((event?.price * watch('seats')) / 100).toFixed(2);
+const totalPrice = (event?.price * watch('seats')).toFixed(2);
 
   const handlePaymentSuccess = () => {
     toast.success('Réservation confirmée !');
